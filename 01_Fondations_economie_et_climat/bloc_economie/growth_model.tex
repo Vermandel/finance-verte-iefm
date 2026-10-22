@@ -1,0 +1,281 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,amssymb,booktabs,microtype}
+\usepackage[margin=25mm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\interp}{\par\smallskip\noindent\textit{Interpretation.}\ }
+\newcommand{\R}{\mathbb{R}}
+\title{\small Session 1 --- Economic block\\[0.6em]
+\LARGE Optimal Growth as a Discrete-Time Control Problem}
+\author{Gauthier Vermandel\\\small \'Ecole polytechnique}
+\date{}
+\begin{document}
+\maketitle
+
+This note formulates the saving decision as a constrained dynamical system.
+The aim is to distinguish what is given, what the planner chooses, and what
+the equations determine. It then connects the mathematical problem to
+\texttt{OptimalGrowth.py}. Basic multivariable calculus and discrete-time
+recursions are the only prerequisites.
+
+\section{The general finite-horizon problem}
+A control problem combines a state equation with a criterion for ranking
+admissible trajectories. It is not defined by an objective alone: the initial
+state, feasible controls, time horizon and terminal treatment are also data.
+
+Let $t=0,\ldots,H-1$ index decision periods of length $\Delta>0$ years.
+The state $x_t\in X\subseteq\R^n$ records inherited quantities; the control
+$a_t\in U_t(x_t)\subseteq\R^m$ is chosen at date $t$. A known path $z_t$
+contains exogenous inputs. An admissible trajectory satisfies
+\begin{equation}\label{eq:generalstate}
+ x_{t+1}=F_t(x_t,a_t;z_t),\qquad
+ x_0=\bar x,\qquad a_t\in U_t(x_t),\quad x_t\in X.
+\end{equation}
+\interp The transition map propagates today's state and decision into
+tomorrow's state. The initial condition is data, not a decision. A control
+sequence is feasible only if its entire induced state path is admissible.
+
+For a period reward $r_t$, terminal payoff $\Phi$ and annual discount rate
+$\rho\geq0$, the problem is
+\begin{equation}\label{eq:generalproblem}
+ \sup_{(a_0,\ldots,a_{H-1})\ {\rm admissible}}
+ J_H,\qquad
+ J_H=\sum_{t=0}^{H-1}\beta^t r_t(x_t,a_t;z_t)
+       +\beta^H\Phi(x_H),\qquad
+ \beta=(1+\rho)^{-\Delta}.
+\end{equation}
+\interp The sum values rewards during the $H$ decision periods; $\Phi$
+values the state left after the final decision. Setting $\Phi=0$ is a
+substantive assumption, not an innocuous omission. Multiplying all rewards
+and the terminal payoff by the same positive constant leaves the optimizer
+unchanged. With a fixed $\Delta$, this covers a common factor $\Delta$
+when rewards are recorded as annual flows.
+
+We use a supremum because existence is not automatic. For a finite horizon,
+compact feasible control sets, continuous transitions and rewards, and a
+nonempty closed feasible set ensure that a maximum is attained.
+Differentiability is additionally needed for the first-order conditions below.
+
+\section{Specialization: households, production and aggregation}
+The economic question is how much output to consume now and how much to
+invest for later. There is one good, one capital stock and an exogenous
+population. A social planner internalizes the intertemporal allocation;
+there is no government, tax system or decentralized price-setting problem
+in this benchmark.
+
+\paragraph{Households and welfare.}
+Let $L_t>0$ be population and $C_t>0$ aggregate consumption. A factor
+$\kappa>0$ converts model consumption units into the units used in utility.
+Constant-relative-risk-aversion (CRRA) utility is
+\begin{equation}\label{eq:utility}
+ c_t=\frac{\kappa C_t}{L_t},\qquad
+ u(c)=
+ \begin{cases}
+ (c^{1-\gamma}-1)/(1-\gamma),&\gamma>0,\ \gamma\ne1,\\
+ \log c,&\gamma=1,
+ \end{cases}
+ \qquad r_t=L_tu(c_t).
+\end{equation}
+\interp Welfare is the sum of identical individual utilities.
+Marginal utility is $u'(c)=c^{-\gamma}>0$ and decreases with consumption.
+In this deterministic model $\gamma$ governs consumption smoothing;
+the intertemporal elasticity of substitution is $1/\gamma$. Its usual
+risk-aversion interpretation matters only when uncertainty is introduced.
+
+\paragraph{Firms and technology.}
+For productivity $A_t>0$, capital $K_t>0$ and $0<\alpha<1$,
+\begin{equation}\label{eq:production}
+ Y_t=f_t(K_t):=A_tK_t^\alpha L_t^{1-\alpha},
+ \qquad f_t'(K_t)=\alpha\frac{Y_t}{K_t}.
+\end{equation}
+\interp Production uses inherited capital and the available population.
+The marginal product $f_t'$ measures the extra annual output produced by
+one additional unit of capital; diminishing returns make this marginal
+benefit fall as capital increases.
+
+\paragraph{Aggregation and the state transition.}
+The saving share $s_t$ allocates output between consumption and investment:
+\begin{equation}\label{eq:resources}
+ I_t=s_t f_t(K_t),\qquad C_t=(1-s_t)f_t(K_t),
+ \qquad Y_t=C_t+I_t.
+\end{equation}
+\interp Saving is not a separate good: it is the part of output invested
+rather than consumed. Once $K_t$, $s_t$, $A_t$ and $L_t$ are known,
+$Y_t$, $I_t$ and $C_t$ are derived quantities, not independent controls.
+
+Write $d=(1-\delta)^\Delta$, where $0\leq\delta<1$ is annual depreciation.
+The economic state evolves according to
+\begin{equation}\label{eq:capital}
+ K_{t+1}=F_t(K_t,s_t):=dK_t+\Delta s_t f_t(K_t),
+ \qquad K_0=\bar K>0.
+\end{equation}
+\interp Next period's capital is surviving capital plus investment over
+$\Delta$ years. Output, consumption and investment are annual flows; capital
+is a stock. This is the course's discrete accounting convention, not the
+exact solution of a continuous-time capital equation with within-period
+depreciation of new investment.
+
+\paragraph{Exogenous inputs.}
+With initial values $A_0,L_0>0$, the module constructs
+\begin{equation}\label{eq:drivers}
+ A_{t+1}=\frac{A_t}{1-g_Ae^{-\delta_A\Delta(t+1)}},
+ \qquad
+ L_{t+1}=L_t\left(\frac{L_\infty}{L_t}\right)^{\ell_g}.
+\end{equation}
+\interp Productivity growth declines over time if $0<g_A<1$ and
+$\delta_A>0$; it vanishes in the baseline $g_A=0$. For $0<\ell_g<1$,
+the logarithmic population gap to $L_\infty$ contracts by $1-\ell_g$
+each step. This is geometric convergence in logs, not the continuous
+logistic equation. The baseline $\ell_g=0$ freezes population.
+Both $g_A$ and $\ell_g$ are step-specific parameters; changing $\Delta$
+requires attention to their calibration.
+
+Substituting the derived quantities gives the complete reduced problem:
+\begin{equation}\label{eq:growthproblem}
+\boxed{\begin{aligned}
+ &\sup_{s_0,\ldots,s_{H-1}}
+ \sum_{t=0}^{H-1}\beta^t R_t(K_t,s_t)+\beta^H\Phi(K_H),\\
+ &R_t(K,s)=L_tu\!\left(\frac{\kappa(1-s)f_t(K)}{L_t}\right),\\
+ &K_{t+1}=dK_t+\Delta s_t f_t(K_t),\quad K_0=\bar K,\\
+ &K_t>0,\quad 0\leq s_t<1,\quad t=0,\ldots,H-1 .
+\end{aligned}}
+\end{equation}
+\interp There is one endogenous state, $K_t$, and one control, $s_t$.
+The known pair $(A_t,L_t)$ enters through the time-dependent maps $f_t$
+and $R_t$. The strict upper bound keeps consumption positive. For a
+compact numerical feasible set one can impose $s_t\leq1-\varepsilon_s$
+with fixed $\varepsilon_s>0$.
+
+\section{Optimality and economic interpretation}
+Dynamic programming makes the trade-off in the objective explicit:
+a saving choice sacrifices current utility but changes the value of
+the capital inherited tomorrow. The Euler equation is a local expression
+of this trade-off, not a substitute for the constraints or terminal data.
+
+Let $V_t(K)$ be optimal remaining welfare, discounted to date $t$.
+The Bellman recursion is
+\begin{equation}\label{eq:bellman}
+ V_H(K)=\Phi(K),\qquad
+ V_t(K)=\sup_{0\leq s<1}
+ \left\{R_t(K,s)+\beta V_{t+1}\big(F_t(K,s)\big)\right\}.
+\end{equation}
+\interp The planner compares immediate utility with the discounted
+continuation value. With $\Phi=0$, saving in the last period gives no
+future reward, so $s_{H-1}=0$. This finite-horizon end effect is why the
+numerical planning window must extend beyond the dates we want to plot.
+
+At a differentiable interior optimum, define the shadow value
+$\lambda_{t+1}=V_{t+1}'(K_{t+1})$. Differentiating with respect to saving gives
+\begin{equation}\label{eq:foc}
+ -\kappa u'(c_t)f_t(K_t)
+ +\beta\lambda_{t+1}\Delta f_t(K_t)=0,
+ \qquad
+ \kappa u'(c_t)=\beta\Delta\lambda_{t+1}.
+\end{equation}
+\interp One extra unit of annual investment costs $\kappa u'(c_t)$
+in current aggregate utility and creates $\Delta$ units of capital with
+discounted value $\beta\lambda_{t+1}$. At a lower-bound optimum the
+derivative of the Bellman objective with respect to $s$ is nonpositive;
+at an imposed upper bound it is nonnegative. Equality applies only
+to an interior saving choice.
+
+The envelope condition, combined with \eqref{eq:foc} at two consecutive
+interior dates, yields
+\begin{equation}\label{eq:euler}
+ u'(c_t)=\beta u'(c_{t+1})
+ \left[d+\Delta f'_{t+1}(K_{t+1})\right],
+ \qquad 0\leq t\leq H-2.
+\end{equation}
+\interp Giving up consumption today earns surviving capital plus its
+marginal product tomorrow. Along an optimal interior path, the utility
+cost equals the discounted utility benefit. Population does not appear
+as a separate multiplier because welfare is population-weighted and
+consumption is per capita using the same contemporaneous $L_t$.
+
+For CRRA utility, an equivalent growth-rate expression is
+\begin{equation}\label{eq:consumptiongrowth}
+ \frac{c_{t+1}}{c_t}
+ =\left[\beta\left(d+\Delta\alpha
+                  \frac{Y_{t+1}}{K_{t+1}}\right)\right]^{1/\gamma}.
+\end{equation}
+\interp Consumption rises when the discounted gross return exceeds one.
+A larger $\gamma$ dampens the consumption-growth response to a given
+return. This equality need not hold at control bounds or across successive
+re-optimizations that use different terminal dates.
+
+\section{Numerical implementation and checks}
+The module uses direct optimization (also called single shooting):
+given a vector of saving rates, it simulates the state recursion and
+evaluates welfare. A bound-constrained solver then varies the saving vector.
+This differs from solving the Bellman equation on a capital grid.
+
+\paragraph{Dates and array rows.}
+Mathematical $t$ labels the beginning of an interval. In the revised module,
+row zero stores only initial states; row $j\geq1$ stores the decision and
+flows for the interval ending at that row. Precisely,
+\begin{equation}\label{eq:codemap}
+ \texttt{K[j]}=K_j,\quad
+ \texttt{s[j]}=s_{j-1},\quad
+ \texttt{(Y,I,C)[j]}=(Y_{j-1},I_{j-1},C_{j-1}).
+\end{equation}
+\interp Production in row $j$ uses \texttt{K[j-1]}, \texttt{A[j-1]}
+and \texttt{L[j-1]}. Its investment produces \texttt{K[j]}.
+The initial control and flows remain \texttt{NaN} and are never inputs
+to the transition. State and flow curves therefore refer respectively
+to dates and intervals ending at those dates.
+
+\paragraph{Objective and horizon.}
+The code sets $\kappa=1000$, uses $\Phi=0$, and minimizes negative welfare
+with the limited-memory BFGS bound-constrained algorithm (L-BFGS-B).
+Its current bounds allow $s=1$ and its utility evaluation floors
+consumption at $10^{-12}$. That numerical regularization is not identical
+to the strictly positive-consumption problem \eqref{eq:growthproblem};
+check that the floor is inactive in a reported solution.
+
+For positive $\rho$ and a threshold $0<\tau<1$, the implemented window is
+\begin{equation}\label{eq:window}
+ H=1+\min\{m\in\mathbb{N}:\beta^m\leq\tau\},
+ \qquad \tau=\texttt{p.toly}.
+\end{equation}
+\interp The algorithm optimizes $H$ decisions, retains the first one,
+moves forward one period and optimizes again. This is a rolling-horizon
+policy, not one optimization over the displayed sample. The threshold
+limits a discount factor; by itself it is not a bound on welfare
+truncation error. The loop requires $\rho>0$, although a fixed-horizon
+mathematical problem can also use $\rho=0$.
+
+\paragraph{Calibration, not empirical estimation.}
+The baseline isolates capital accumulation by freezing productivity and
+population. These values are supplied inputs, not parameters estimated
+from observations in this notebook.
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Value & Meaning\\
+\midrule
+$\Delta,\ \bar K$ & $1,\ 3$ & Years per step; initial capital\\
+$\alpha,\ \delta$ & $0.30,\ 0.06$ & Capital elasticity; annual depreciation\\
+$A_0,\ g_A,\ \delta_A$ & $1,\ 0,\ 0.005$ & Productivity and its growth parameters\\
+$L_0,\ \ell_g$ & $1,\ 0$ & Normalized population; convergence speed\\
+$L_\infty$ & $10500$ & Inactive population target in the baseline\\
+$\rho,\ \gamma$ & $0.015,\ 2$ & Annual discount rate; utility curvature\\
+$\tau$ & $10^{-3}$ & Discount-factor threshold\\
+\bottomrule
+\end{tabular}
+\end{center}
+If population growth is activated, $L_0$ and $L_\infty$ must share a
+consistent unit: a normalized population of one cannot be interpreted
+as millions without an explicit conversion.
+
+\paragraph{Verification and experiments.}
+First verify positive finite consumption and capital, admissible saving,
+the resource identity \eqref{eq:resources}, and the transition
+\eqref{eq:capital} on every simulated interval. Then compare interior Euler
+residuals, alternative starting guesses and longer planning windows.
+A successful solver return is useful but not a proof of global optimality.
+Finally, vary depreciation or the capital share one at a time and interpret
+the saving response through the return in \eqref{eq:consumptiongrowth}.
+Population and productivity experiments should keep units and initial
+conditions explicit.
+
+\end{document}

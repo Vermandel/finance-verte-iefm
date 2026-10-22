@@ -1,0 +1,314 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,amssymb,booktabs,microtype}
+\usepackage[margin=25mm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\interp}{\par\smallskip\noindent\textit{Interpretation.}\ }
+\newcommand{\R}{\mathbb{R}}
+\title{\small Session 2 --- Climate block\\[0.6em]
+\LARGE Climate Dynamics as an Initial-Value Problem}
+\author{Gauthier Vermandel\\\small \'Ecole polytechnique}
+\date{}
+\begin{document}
+\maketitle
+
+This note describes how an emissions path generates carbon concentrations,
+radiative forcing and temperature changes. The model is deliberately small:
+three carbon reservoirs, one methane concentration and two temperatures.
+We first pose a continuous-time ordinary differential equation (ODE) system,
+then derive the explicit time-stepping scheme used in
+\texttt{Climate\_Models.py}. Every stock, flow and initial condition has a
+distinct role.
+
+\section{What is given, what is solved?}
+Unlike the economic block, the stand-alone climate block contains no
+optimization. Emissions are prescribed inputs. Once parameters, initial
+states and an emissions scenario are specified, the task is to solve an
+initial-value problem, also called a Cauchy problem.
+
+Time $t$ is measured in years on a finite interval $[t_0,t_f]$.
+Let $M_a,M_u,M_\ell$ denote atmospheric, upper-ocean and lower-ocean carbon
+stocks in gigatonnes of carbon (GtC). Let $q$ be atmospheric methane
+concentration in parts per billion (ppb), and $T_a,T_\ell$ temperature
+anomalies relative to the model's reference climate in degrees Celsius.
+The state and input vectors are
+\begin{equation}\label{eq:vectors}
+ x=(M_a,M_u,M_\ell,q,T_a,T_\ell)^\top,\qquad
+ e=(e_{\mathrm{CO_2}},e_{\mathrm{CH_4}})^\top .
+\end{equation}
+\interp The six states summarize the system's inherited physical condition.
+The prescribed inputs are a carbon-dioxide mass flow
+$e_{\mathrm{CO_2}}$ in GtCO$_2$/year and a methane concentration source
+$e_{\mathrm{CH_4}}$ in ppb/year. A mass-based methane series must therefore
+be converted before it can enter this model.
+
+For fixed parameters $\theta$, the complete mathematical task is
+\begin{equation}\label{eq:cauchy}
+ \boxed{\dot x(t)=f(x(t),e(t);\theta),\qquad
+ x(t_0)=x^0,\qquad t\in[t_0,t_f].}
+\end{equation}
+\interp The derivative is the instantaneous change of the state per year.
+Six first-order equations require six initial values. No terminal
+temperature target or terminal state is imposed: future climate is the
+output. An inverse problem (find emissions meeting a target) or a control
+problem (choose emissions to optimize welfare) would be a different task.
+
+All components of $x^0$ must be specified at the same calendar date.
+Carbon stocks are positive, methane concentration is positive, and
+temperature anomalies may have either sign. Stocks cannot be replaced
+by emissions, nor can an anomaly be interpreted as an absolute temperature.
+
+\section{Physical equations and their interpretation}
+The model is triangular: emissions affect carbon and methane; these
+determine radiative forcing; forcing drives temperatures. There is no
+temperature feedback on the carbon cycle in this particular benchmark.
+That omission is a modeling restriction, not a general physical claim.
+
+\paragraph{Carbon exchange.}
+Let $(m_a,m_u,m_\ell)$ be reference carbon stocks, with each entry positive.
+The annual transfer coefficients are $b_{12},b_{23}\geq0$.
+Define reverse rates and the CO$_2$-to-carbon conversion by
+\begin{equation}\label{eq:rates}
+ b_{21}=b_{12}\frac{m_a}{m_u},\qquad
+ b_{32}=b_{23}\frac{m_u}{m_\ell},\qquad
+ \xi=\frac{12}{44}=\frac{3}{11}.
+\end{equation}
+\interp Reverse rates balance the exchange flows at the reference stocks.
+The factor $\xi$ converts a mass of CO$_2$ into its carbon content;
+it is not the fraction of emissions that remains in the atmosphere.
+
+Writing $M=(M_a,M_u,M_\ell)^\top$ and $v_a=(1,0,0)^\top$, carbon dynamics are
+\begin{equation}\label{eq:carbon}
+ \dot M=BM+\xi e_{\mathrm{CO_2}}v_a,\qquad
+ B=\begin{pmatrix}
+ -b_{12}&b_{21}&0\\
+ b_{12}&-(b_{21}+b_{23})&b_{32}\\
+ 0&b_{23}&-b_{32}
+ \end{pmatrix}.
+\end{equation}
+\interp Each diagonal entry is an outflow rate from a reservoir; each
+off-diagonal term transfers carbon from another reservoir. Emissions enter
+the atmosphere. There is no direct atmosphere--lower-ocean exchange.
+The upper ocean links the fast atmospheric reservoir to the slow deep one.
+
+Two identities are useful for understanding and checking the system:
+\begin{equation}\label{eq:conservation}
+ B\begin{pmatrix}m_a\\m_u\\m_\ell\end{pmatrix}=0,\qquad
+ \frac{d}{dt}(M_a+M_u+M_\ell)=\xi e_{\mathrm{CO_2}}.
+\end{equation}
+\interp Without emissions, the reference stocks are stationary, and
+internal transfers conserve total carbon. Zero emissions do not generally
+restore the reference climate: an initially elevated total stock remains
+inside these three modeled reservoirs and is redistributed among them.
+The zero eigenvalue associated with carbon conservation is not a numerical
+instability.
+
+\paragraph{Methane.}
+Let $\bar q>0$ be the reference concentration and $\delta_q>0$ the removal
+rate. The one-box methane equation is
+\begin{equation}\label{eq:methane}
+ \dot q=-\delta_q(q-\bar q)+e_{\mathrm{CH_4}},
+ \qquad \tau_q=\delta_q^{-1}.
+\end{equation}
+\interp Excess methane decays with characteristic lifetime $\tau_q$,
+while the prescribed source replenishes it. The restoring term includes
+an implicit background source maintaining $\bar q$; setting the additional
+input to zero returns methane toward $\bar q$, not toward zero.
+
+\paragraph{Radiative forcing.}
+Let $F_{2\times}>0$ denote forcing from doubled atmospheric CO$_2$,
+and $\alpha_q\geq0$ the methane forcing coefficient. The forcing diagnostic is
+\begin{equation}\label{eq:forcing}
+ F(M_a,q)=F_{2\times}\frac{\log(M_a/m_a)}{\log2}
+       +\alpha_q(\sqrt q-\sqrt{\bar q}).
+\end{equation}
+\interp Forcing, in W/m$^2$, is the radiative energy imbalance induced by
+the gas concentrations. Doubling $M_a$ from its reference value contributes
+$F_{2\times}$; the methane term measures forcing relative to $\bar q$.
+Forcing is an algebraic output, not an additional state requiring its
+own initial condition. This simplified formula omits gas-overlap effects,
+aerosols and other external forcing components.
+
+\paragraph{Temperature response.}
+Let $S>0$ be equilibrium climate sensitivity, and set
+$\lambda=F_{2\times}/S$. With $c_1,c_4>0$ and $c_3>0$,
+\begin{equation}\label{eq:temperatures}
+ \begin{aligned}
+ \dot T_a&=c_1\big[F-\lambda T_a-c_3(T_a-T_\ell)\big],\\
+ \dot T_\ell&=c_4(T_a-T_\ell).
+ \end{aligned}
+\end{equation}
+\interp Surface temperature rises with forcing, falls with radiative
+restoration $\lambda T_a$, and loses heat to a colder deep ocean.
+Deep-ocean temperature adjusts more slowly toward the surface temperature.
+Here $\lambda$ and $c_3$ have units W/m$^2$/K, $c_1$ has units
+K/(year W/m$^2$), and $c_4$ has units year$^{-1}$.
+
+For constant forcing and an equilibrium in both temperature boxes,
+\begin{equation}\label{eq:equilibrium}
+ T_a^*=T_\ell^*=\frac{F}{\lambda},
+ \qquad F=F_{2\times}\ \Longrightarrow\ T_a^*=S.
+\end{equation}
+\interp Equilibrium climate sensitivity is the eventual response to
+sustained doubling forcing after ocean adjustment. It is not the
+temperature reached immediately, nor the warming at a fixed near-term
+date under a changing emissions scenario.
+
+\section{Well-posedness and discretization}
+Writing an ODE is not enough: its domain and assumptions must allow a
+solution, and the numerical scheme must respect the properties we intend
+to study. We separate the continuous problem from its approximation.
+
+\paragraph{Existence, uniqueness and dependence on inputs.}
+Suppose the emissions inputs are bounded and piecewise continuous on
+$[t_0,t_f]$, reference stocks are strictly positive, and the initial carbon
+and methane states are strictly positive. On the domain where $M_a>0$
+and $q>0$, the right-hand side is locally Lipschitz in the state.
+The linear reservoir equations and the two-box temperature equations
+therefore give a unique solution on any finite interval that stays in
+this domain; solutions depend continuously on initial data and inputs.
+
+For nonnegative emissions, the carbon matrix has nonnegative off-diagonal
+entries and the methane background source is positive. These properties
+preserve nonnegative stocks; strictly positive initial stocks stay positive
+on finite intervals. Bounded inputs then keep stocks finite and the forcing
+well-defined, so the solution extends through $t_f$. If negative emissions
+are allowed, positivity must be checked: an input that exhausts atmospheric
+carbon takes the logarithm outside the model's domain.
+
+\paragraph{Forward Euler on a calendar grid.}
+Let $t_n=t_0+n\Delta$, with $n=0,\ldots,N$. Holding inputs constant
+over each interval gives the explicit approximation
+\begin{equation}\label{eq:euler}
+ x_{n+1}=x_n+\Delta f(x_n,e_n;\theta),\qquad x_0=x^0.
+\end{equation}
+\interp A derivative is a rate per year; multiplying by $\Delta$ converts
+it into a change over the interval. Forward Euler evaluates every
+right-hand side at the old state. Under usual smoothness assumptions its
+global error is first order in $\Delta$; halving the step is a basic
+convergence check, not a change in the physical model.
+
+In particular, the carbon and methane steps are
+\begin{equation}\label{eq:gassteps}
+ \begin{aligned}
+ M_{n+1}&=(I+\Delta B)M_n+\Delta\xi e_{\mathrm{CO_2},n}v_a,\\
+ q_{n+1}&=\bar q+(1-\Delta\delta_q)(q_n-\bar q)
+                         +\Delta e_{\mathrm{CH_4},n}.
+ \end{aligned}
+\end{equation}
+\interp If emissions are stored as annual rates, both source terms require
+$\Delta$. If instead the input is already a period total, it must not be
+multiplied by $\Delta$ again. The revised stand-alone module consistently
+uses annual rates for both inputs.
+
+Sufficient conditions for nonnegative reservoir weights are
+\begin{equation}\label{eq:positive}
+ \Delta\max\{b_{12},\,b_{21}+b_{23},\,b_{32}\}\leq1,
+ \qquad \Delta\delta_q\leq1.
+\end{equation}
+\interp A discrete step should not remove more of a reservoir than it
+contains. These conditions prevent negative weights in the explicit gas
+updates; they are sufficient conditions, not necessary ones for every
+particular trajectory.
+
+For temperatures, write $T=(T_a,T_\ell)^\top$. The update is
+\begin{equation}\label{eq:tempstep}
+ T_{n+1}=(I+\Delta D)T_n+
+      \Delta\begin{pmatrix}c_1\\0\end{pmatrix}F(M_{a,n},q_n),
+ \quad
+ D=\begin{pmatrix}
+ -c_1(\lambda+c_3)&c_1c_3\\
+ c_4&-c_4
+ \end{pmatrix}.
+\end{equation}
+\interp The forcing and exchange terms are evaluated at the beginning of
+the interval. For a stable homogeneous discrete temperature response,
+each eigenvalue $\eta$ of $D$ must satisfy $|1+\Delta\eta|<1$.
+Thus a stable continuous ODE can still have an unstable explicit
+discretization if the time step is too large.
+
+\section{From the equations to the notebook}
+The notebook first considers a stationary reference climate, then feeds
+historical emissions into the model and compares temperature anomalies.
+Future scenarios are conditional simulations, not forecasts independent
+of their emissions assumptions.
+
+\paragraph{Code mapping.}
+The names in \texttt{Params} and in the simulation matrix correspond to
+the mathematical objects as follows.
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Mathematical object & Python name & Unit\\
+\midrule
+$M_a,M_u,M_\ell$ & \texttt{M\_AT, M\_UP, M\_LO} & GtC\\
+$q$ & \texttt{M\_CH4} & ppb (not a mass)\\
+$T_a,T_\ell$ & \texttt{T\_AT, T\_LO} & $^\circ$C anomaly\\
+$e_{\mathrm{CO_2}}$ & \texttt{E} & GtCO$_2$/year\\
+$e_{\mathrm{CH_4}}$ & \texttt{E\_CH4} & ppb/year\\
+$F$ & \texttt{F} & W/m$^2$\\
+$m_a,m_u,m_\ell$ & \texttt{mat, mup, mlo} & GtC\\
+$S,F_{2\times}$ & \texttt{T2XCO2, F2XCO2} & $^\circ$C; W/m$^2$\\
+$\bar q,\delta_q,\alpha_q$ &
+ \texttt{mch4, delta\_ch4, alpha\_ch4} & As in \eqref{eq:methane}--\eqref{eq:forcing}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Row zero stores the initial climate state. To compute row $j\geq1$,
+\texttt{update\_path} reads states and emissions from row $j-1$.
+The requested final date is included. Consequently, an emissions value
+recorded at year 2020 acts over the interval starting in 2020; it is not
+the emissions value for the preceding interval.
+
+The forcing stored in \texttt{F[j]} is evaluated from the states in row
+$j-1$ and used for that interval's temperature update. It therefore
+represents interval forcing, whereas \texttt{T\_AT[j]} is the end-of-interval
+temperature. The initial forcing entry can remain \texttt{NaN}: it is
+not an independent state. Emissions at the initial date, in contrast,
+must be provided because they drive the first transition.
+
+\paragraph{Calibration and initial conditions.}
+The default simulation uses $\Delta=5$ years and begins in 2015.
+The historical exercise overrides the step to one year and resets the
+states to a preindustrial reference. Those are different initial-value
+problems and must not be combined accidentally.
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Quantity & Default value & Role\\
+\midrule
+$(m_a,m_u,m_\ell)$ & $(588,360,1720)$ & Reference carbon stocks\\
+$(M_a^0,M_u^0,M_\ell^0)$ & $(851,460,1740)$ & Initial carbon stocks\\
+$(b_{12},b_{23})$ & $(0.024,0.0014)$ & Annual transfer rates\\
+$(\bar q,q^0,\delta_q)$ & $(722,1860,1/9)$ & Methane reference, initial value, decay\\
+$(F_{2\times},S)$ & $(3.3613,3.1)$ & Forcing scale and climate sensitivity\\
+$(c_1,c_3,c_4)$ & $(0.0201,0.0176,0.005)$ & Temperature-response coefficients\\
+$(T_a^0,T_\ell^0)$ & $(0.85,0.007)$ & Initial temperature anomalies\\
+$\alpha_q$ & $0.036$ & Methane forcing coefficient\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Data are not model states.}
+The historical CO$_2$ series is an emissions flow: convert tonnes
+to gigatonnes before applying $\xi$. Do not feed CO$_2$-equivalent methane
+emissions directly into a concentration equation: the warming-potential
+conversion and the conversion from methane mass to ppb are separate
+assumptions. Match all series by calendar year rather than array position.
+For temperature comparisons, harmonize reference periods for anomalies;
+otherwise a level difference may be a baseline mismatch rather than
+a model error. These simplified exercises do not estimate all model
+parameters or reproduce a full climate-model calibration.
+
+\paragraph{Reproducible checks.}
+Start at $(m_a,m_u,m_\ell,\bar q,0,0)$ with zero inputs: every state should
+remain stationary. Next add a CO$_2$ pulse and verify that the change in
+total carbon equals $\Delta\xi e_{\mathrm{CO_2}}$ at each step.
+Then run a constant-forcing temperature experiment and check convergence
+to \eqref{eq:equilibrium}. Finally compare annual and finer-step simulations
+at common dates, preserving the same annual emissions inputs.
+These tests distinguish equation errors, unit errors and discretization
+errors before interpreting differences between scenarios.
+
+\end{document}

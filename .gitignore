@@ -1,0 +1,11 @@
+.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+*_solution.ipynb
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+.DS_Store

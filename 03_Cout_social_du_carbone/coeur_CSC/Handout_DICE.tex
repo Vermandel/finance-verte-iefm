@@ -1,0 +1,312 @@
+%\addtokomafont{footnote}{\footnotesize\sffamily}
+% name
+% Space above
+% Space below
+% Body font
+% Indent amount
+% Theorem head font
+% Punctuation after theorem head
+% Space after theorem head
+% Theorem head spec (can be left empty, meaning ?normal?)
+%\excludecomment{solution}
+
+\documentclass[11pt]{scrartcl}%
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{lmodern}
+\usepackage{sansmath}
+\usepackage[cp1251]{inputenc}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{paralist}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[toc,page]{appendix}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{scrextend}
+\usepackage{epstopdf}
+\usepackage{cancel}
+\usepackage{comment}
+\usepackage{tikz}
+\usepackage{sgame}
+\usepackage{color}
+\usepackage{indentfirst}
+\usepackage{natbib}
+\usepackage{wasysym}
+\usepackage{sansmath}
+\usepackage{mathpazo}
+\usepackage{hyperref}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+\usepackage{comment}%
+\setcounter{MaxMatrixCols}{30}
+%TCIDATA{OutputFilter=latex2.dll}
+%TCIDATA{Version=5.50.0.2953}
+%TCIDATA{CSTFile=LaTeX Article (bright).cst}
+%TCIDATA{Created=Thursday, March 30, 2023 18:09:13}
+%TCIDATA{LastRevised=Tuesday, August 19, 2025 11:56:38}
+%TCIDATA{<META NAME="GraphicsSave" CONTENT="32">}
+%TCIDATA{<META NAME="SaveForMode" CONTENT="1">}
+%TCIDATA{BibliographyScheme=Manual}
+%TCIDATA{<META NAME="DocumentShell" CONTENT="Articles\SW\A Simple MIT Press Article">}
+%BeginMSIPreambleData
+\providecommand{\U}[1]{\protect\rule{.1in}{.1in}}
+%EndMSIPreambleData
+\usetikzlibrary{shapes}
+\usetikzlibrary{positioning,arrows}
+\usetikzlibrary{patterns}
+\usetikzlibrary{decorations.pathreplacing}
+\hypersetup{
+bookmarks=true, bookmarksnumbered=false, unicode=false, pdftoolbar=true, pdfmenubar=true, pdfstartview={FitH}, pdfnewwindow=true, pdfkeywords={keywords}, colorlinks=true, linkcolor=black, citecolor=black, filecolor=black, urlcolor=cyan }
+\setlist{parsep=0pt,listparindent=\parindent}
+\newtheoremstyle{mytheoremstyle}
+{\topsep}
+{\topsep}
+{\sffamily}
+{}
+{\scshape}
+{.}
+{.5em}
+{}
+\theoremstyle{mytheoremstyle}
+\newtheorem{theorem}{Theorem}
+\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{case}[theorem]{Case}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conclusion}[theorem]{Conclusion}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{criterion}[theorem]{Criterion}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{summary}[theorem]{Summary}
+\newtheorem{solution}[theorem]{Solution}
+\theoremstyle{plain}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Acal}{\mathcal{A}}
+\newcommand{\Scal}{\mathcal{S}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\p}{\mathbf{p}}
+\newcommand{\h}{\mathbf{h}}
+\newcommand{\tax}{\mathbf{t}}
+\newcommand{\dd}{\mathrm{d}}
+\renewenvironment{solution}{\color{darkgray} \hspace{-.35cm}\rule{\linewidth}{0.5mm} \textbf{Solution}\newline }{\color{black}\vspace{.5cm}  }
+\makeatletter
+\renewcommand\@seccntformat[1]{}
+\makeatother
+\subtitle{Handout: DICE model}
+\begin{document}
+
+\title{``Climate risk quantification methods and tools'' }
+\author{Gauthier Vermandel}
+\date{}
+\maketitle
+
+\section{Model Equations (DICE-style)}
+
+\subsection*{Time, Technology, Population}%
+
+\begin{align}
+t(i)  & = t_{0} + \Delta\, i,\\
+A(i)  & = \frac{A(i-1)}{1 - g_{A} \exp(-\delta_{A} \Delta\, i)},\\
+L(i)  & = L(i-1)\left( \frac{L_{\infty}}{L(i-1)}\right) ^{\ell_{g}}.
+\end{align}
+
+
+\subsection*{Carbon Intensity \& Abatement Cost Share}%
+
+\begin{align}
+\sigma(i)  & = \sigma(i-1)\,\exp\!\Big(-\,g_{\sigma}\,\big(1-\delta_{\sigma
+}\big)^{\Delta(i-1)}\,\Delta\Big),\\
+\theta_{1}(i)  & = \frac{p_{b}}{1000\,\theta_{2}}\,\big(1-\delta
+_{pb}\big)^{i-1}\,\sigma(i).
+\end{align}
+
+
+\subsection*{Output, Damages/Abatement, Net Output}%
+
+\begin{align}
+Y(i)  & = A(i)\,K(i-1)^{\alpha}\,\Big(\tfrac{L(i)}{1000}\Big)^{1-\alpha},\\
+Q(i)  & = \Delta\,\frac{\big(1-\theta_{1}(i)\,\mu(i)\big)^{\theta_{2}}}{1 +
+a_{2}\,T_{AT}(i)^{a_{3}}}\,Y(i).
+\end{align}
+
+
+\subsection*{Consumption, Investment, Capital Accumulation}%
+
+\begin{align}
+C(i)  & = \big(1 - s(i)\big)\,Q(i),\\
+K(i)  & = \big(1-\delta_{K}\big)^{\Delta}\,K(i-1) + s(i)\,Q(i).
+\end{align}
+
+
+\subsection*{Emissions \& Radiative Forcing}%
+
+\begin{align}
+E(i) &  =\Delta\Big[\sigma(i)\big(1-\mu(i)\big)Y(i)+E_{\text{Land}}(i)\Big],\\
+E_{\text{Land}}(i) &  =E_{L0}\,\big(1-\delta_{EL}\big)^{i},\\
+F_{EX}(i) &  =f_{0}+\min\!\Big(\tfrac{(f_{1}-f_{0})\,i}{t_{f}},\,f_{1}%
+-f_{0}\Big),\\
+F(i) &  =F_{2\times CO_{2}}\;\log_{2}\!\Big(\tfrac{M_{AT}(i-1)}{M_{AT0}%
+}\Big)+F_{EX}(i).
+\end{align}
+
+
+\subsection*{Carbon Cycle (Three-Box)}%
+
+\begin{align}
+M_{AT}(i)  & = \big(1-\Delta b_{12}\big)\,M_{AT}(i-1) + \Delta b_{12}%
+\,\frac{M_{AT0}}{M_{UP0}}\,M_{UP}(i-1) + \xi\,E(i),\\
+M_{UP}(i)  & = \Delta b_{12}\,M_{AT}(i-1) + \Big(1-\Delta b_{12}\tfrac
+{M_{AT0}}{M_{UP0}}-\Delta b_{23}\Big)\,M_{UP}(i-1) + \Delta b_{23}%
+\,\frac{M_{UP0}}{M_{LO0}}\,M_{LO}(i-1),\\
+M_{LO}(i)  & = \Delta b_{23}\,M_{UP}(i-1) + \Big(1-\Delta b_{23}\tfrac
+{M_{UP0}}{M_{LO0}}\Big)\,M_{LO}(i-1).
+\end{align}
+
+
+\subsection*{Temperature Dynamics (Two-Box)}%
+
+\begin{align}
+T_{AT}(i) &  =T_{AT}(i-1)+\Delta c_{1}\,F(i)-\Delta c_{1}\,\frac{F_{2\times
+CO_{2}}}{T_{2\times CO_{2}}}\,T_{AT}(i-1)-\Delta c_{1}c_{3}\big[T_{AT}%
+(i-1)-T_{LO}(i-1)\big],\\
+T_{LO}(i) &  =T_{LO}(i-1)+\Delta c_{4}\big[T_{AT}(i-1)-T_{LO}(i-1)\big].
+\end{align}
+
+
+\subsection*{Planner's Objective (CRRA over consumption per capita)}%
+
+\begin{align}
+c_{pc}(i)  & = 1000\,\frac{C(i)}{L(i)},\\
+u(i)  & =
+\begin{cases}
+L(i)\,\dfrac{c_{pc}(i)^{1-\gamma}-1}{1-\gamma}, & \gamma\neq1,\\[6pt]%
+L(i)\,\ln c_{pc}(i), & \gamma= 1,
+\end{cases}
+\\
+W  & = \sum_{i \in\mathcal{I}} \beta(i)\,u(i), \quad\beta(i)=\Big(\tfrac
+{1}{1+\rho}\Big)^{\Delta(i-i_{0})}.
+\end{align}
+
+
+\subsection*{Key Symbols}
+
+\begin{itemize}
+\item $\Delta$ time step; $\rho$ pure rate of time preference; $\gamma$ CRRA.
+
+\item $A$ TFP; $K$ capital; $L$ population; $\alpha$ capital share.
+
+\item $\sigma$ carbon intensity; $\mu$ abatement rate; $\theta_{1},\theta_{2}$
+abatement cost params.
+
+\item $a_{2},a_{3}$ damage function params; $T_{AT},T_{LO}$ temperatures
+(atmosphere, deep ocean).
+
+\item $E$ emissions; $E_{\text{Land}}$ land-use emissions; $F$ forcing;
+$F_{EX}$ exogenous forcing.
+
+\item Carbon boxes: $M_{AT},M_{UP},M_{LO}$ with preindustrial baselines
+$M_{AT0},M_{UP0},M_{LO0}$.
+
+\item Flows $b_{12},b_{23}$; conversion $\xi$; climate response $c_{1}%
+,c_{3},c_{4}$; sensitivities $F_{2\times CO_{2}}$, $T_{2\times CO_{2}}$.
+\end{itemize}
+
+\begin{table}[h]
+\caption{Calibration of Model Parameters}%
+\label{tab:calibration}%
+\centering
+\begin{tabular}
+[c]{lllp{8cm}}%
+\toprule \textbf{Symbol} & \textbf{Value} & \textbf{Unit} &
+\textbf{Description}\\
+\multicolumn{4}{l}{\textit{Time grid}}\\
+$\Delta$ & 5 & years & Time step\\
+$t_{0}$ & 2015 & year & Start year (fixed)\\
+$t_{T}$ & 2100 & year & End year of simulations\\
+$n_{T}$ & -- & periods & Number of time steps\\
+\multicolumn{4}{l}{\textit{Social preferences and production}}\\
+$\rho$ & 0.015 & 1/yr & Pure rate of time preference\\
+$\gamma$ & 1.45 & -- & CRRA coefficient\\
+$\delta_{K}$ & 0.10 & 1/yr & Capital depreciation rate\\
+$\alpha$ & 0.30 & -- & Capital share in production\\
+\multicolumn{4}{l}{\textit{Technology}}\\
+$A_{0}$ & 5.115 & -- & Initial TFP level\\
+$g_{A}$ & 0.076 & 1/yr & Initial TFP growth rate\\
+$\delta_{A}$ & 0.005 & 1/yr & TFP growth decline rate\\
+$K_{0}$ & 220.0 & trillions USD & Initial capital stock\\
+\multicolumn{4}{l}{\textit{Population}}\\
+$\ell_{g}$ & 0.134 & 1/yr & Population growth rate parameter\\
+$L_{\infty}$ & 10500 & millions & Asymptotic population\\
+$L_{0}$ & 7403 & millions & Initial population\\
+\multicolumn{4}{l}{\textit{Decoupling}}\\
+$g_{\sigma}$ & 0.0152 & 1/yr & Initial carbon intensity decline\\
+$\delta_{\sigma}$ & 0.00 & 1/yr & Decline decay rate\\
+$\sigma_{0}$ & 0.3503 & GtCO$_{2}$/trillion USD & Initial carbon intensity\\
+\multicolumn{4}{l}{\textit{Abatement}}\\
+$p_{b}$ & 550 & USD/tCO$_{2}$ & Initial backstop price\\
+$\theta_{2}$ & 2.6 & -- & Abatement cost exponent\\
+$\delta_{pb}$ & 0.025 & 1/yr & Decline rate of backstop price\\
+\multicolumn{4}{l}{\textit{Climate damages}}\\
+$a_{2}$ & 0.00236 & -- & Damage coefficient\\
+$a_{3}$ & 2 & -- & Damage exponent\\
+\bottomrule &  &  &
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\caption{Calibration of Model Parameters (cont)}%
+\label{tab:calibration}%
+\centering
+\begin{tabular}
+[c]{lllp{8cm}}%
+\toprule \textbf{Symbol} & \textbf{Value} & \textbf{Unit} &
+\textbf{Description}\\
+\multicolumn{4}{l}{\textit{Climate system}}\\
+$F_{2\times CO_{2}}$ & 3.3613 & W/m$^{2}$ & Forcing from CO$_{2}$ doubling\\
+$T_{2\times CO_{2}}$ & 3.1 & $^{\circ}$C & Equilibrium climate sensitivity\\
+$\xi$ & 3/11 & CO$_2$ to Carbon & Conversion factor CO2 emissions $\to$ carbon\\
+$M_{AT}^{0}$ & 851 & GtC & Initial atmospheric carbon\\
+$M_{UP}^{0}$ & 460 & GtC & Initial upper-ocean carbon\\
+$M_{LO}^{0}$ & 1740 & GtC & Initial deep-ocean carbon\\
+$M_{AT}$ & 588 & GtC & Preindustrial atmospheric carbon\\
+$M_{UP}$ & 360 & GtC & Preindustrial upper-ocean carbon\\
+$M_{LO}$ & 1720 & GtC & Preindustrial deep-ocean carbon\\
+$b_{12}$ & 0.024 & 1/yr & Carbon flow: atmosphere $\to$ upper ocean\\
+$b_{23}$ & 0.0014 & 1/yr & Carbon flow: upper ocean $\to$ deep ocean\\
+$c_{1}$ & 0.0201 & $^{\circ}$C/(W/m$^{2}$) & Climate response coefficient\\
+$c_{3}$ & 0.0176 & 1/yr & Heat transfer: atmosphere $\to$ ocean\\
+$c_{4}$ & 0.005 & 1/yr & Heat transfer: ocean $\to$ atmosphere\\
+$T_{AT}^{0}$ & 0.85 & $^{\circ}$C & Initial atmospheric temperature anomaly\\
+$T_{LO}^{0}$ & 0.007 & $^{\circ}$C & Initial deep-ocean temperature anomaly\\
+\multicolumn{4}{l}{\textit{Exogenous forcing}}\\
+$f_{1}$ & 1.00 & W/m$^{2}$ & Final exogenous forcing\\
+$f_{0}$ & 0.50 & W/m$^{2}$ & Initial exogenous forcing\\
+$t_{f}$ & 17.0 & years & Transition period for exogenous forcing\\
+\multicolumn{4}{l}{\textit{Land-use emissions}}\\
+$E_{L0}$ & 2.6 & GtCO$_{2}$/yr & Initial land-use emissions\\
+$\delta_{EL}$ & 0.115 & 1/yr & Decline rate of land-use emissions\\
+\multicolumn{4}{l}{\textit{Numerical bounds}}\\
+$s_{\min}$ & 0.0 & -- & Lower bound on saving rate\\
+$s_{\max}$ & 1.0 & -- & Upper bound on saving rate\\
+\bottomrule &  &  &
+\end{tabular}
+\end{table}
+
+
+\end{document}
